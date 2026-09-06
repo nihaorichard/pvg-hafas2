@@ -1,0 +1,15 @@
+{
+  "generated_at": null,
+  "source_url": "https://www.vmt-thueringen.de/fileadmin/VMT_Redaktion/OPEN_DATA/VMT_GTFS.zip",
+  "feed_info": {"feed_publisher_name": "VMT GmbH"},
+  "stop_group_name": "Weimar, Abzweig nach Niedergrunstedt",
+  "stop_labels": {
+    "de:16055:155056::15505600": "Richtung A",
+    "de:16055:155056::15505601": "Richtung B"
+  },
+  "auto_direction_labels": {},
+  "stops": {},
+  "calendars": {},
+  "calendar_exceptions": {},
+  "departures": []
+}
