@@ -1,0 +1,7 @@
+{
+  "stop_group_name": "Weimar, Abzweig nach Niedergrunstedt",
+  "stop_ids": {
+    "de:16055:155056::15505600": "Richtung A",
+    "de:16055:155056::15505601": "Richtung B"
+  }
+}
