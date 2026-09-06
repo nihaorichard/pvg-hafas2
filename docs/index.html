@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1600, initial-scale=1">
+<title>Abfahrten</title>
+
+<style>
+  /* ======================================================
+     CUSTOMIZE HERE
+     ====================================================== */
+
+  :root{
+
+    /* ====================================================
+       DASHBOARD
+       ==================================================== */
+
+    --canvas-width:1600px;
+    --canvas-height:960px;
+
+    --page-bg:#FFFFFF;
+
+
+    /* ====================================================
+       STOP NAME
+       ==================================================== */
+
+    --stop-name-text:"BUS STOP Abzweig n. Niedergrunstedt";
+    --stop-name-color:#000000;
+    --stop-name-size:70px;
+    --stop-header-bg:#FFFFFF;
+
+
+    /* ====================================================
+       TABLE
+       ==================================================== */
+
+    --table-header-bg:#FFFFFF;
+    --table-header-color:#0F0F0F;
+    --table-header-size:26px;
+    --table-header-en-size:18px;
+
+    --row-text-color:#000000;
+    --row-text-size:38px;
+    --row-padding-y:22px;
+
+    --divider-color:#4a5164;
+    --max-departures:10;
+
+
+    /* ====================================================
+       QR CODE
+       ==================================================== */
+
+    /* WEBSITE / TEXT ENCODED INTO QR CODE */
+    --qr-url:"URLLINK.net";
+
+    /* QR CODE SQUARE SIZE */
+    --qr-size:200px;
+
+    /* QR BORDER */
+    --qr-border-width:10px;
+    --qr-border-color:#000000;
+
+    /*
+       QR POSITION
+       X = from LEFT
+       Y = from TOP
+    */
+    --qr-x:50px;
+    --qr-y:700px;
+
+
+    /* ====================================================
+       TEXT BOX
+       ==================================================== */
+
+    /* TEXT SHOWN INSIDE THE BOX */
+    --box-text:"FOR LIVE";
+
+    /*
+       If you want two lines, use the HTML text
+       setting below instead.
+    */
+
+    --text-box-size:200px;
+
+    --text-box-bg:#000000;
+    --text-box-color:#FFFFFF;
+
+    --text-box-font-size:28px;
+
+    /*
+       TEXT BOX POSITION
+       X = from LEFT
+       Y = from TOP
+    */
+    --text-box-x:300px;
+    --text-box-y:700px;
+
+  }
+
+
+  /* ======================================================
+     BASIC PAGE
+     ====================================================== */
+
+  *{
+    box-sizing:border-box;
+  }
+
+  html,
+  body{
+    margin:0;
+    padding:0;
+  }
+
+  body{
+    background:#000;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+
+  /* ======================================================
+     1600 × 960 CANVAS
+     ====================================================== */
+
+  .canvas{
+
+    width:var(--canvas-width);
+    height:var(--canvas-height);
+
+    background:var(--page-bg);
+
+    font-family:'Courier New',ui-monospace,monospace;
+
+    overflow:hidden;
+
+    display:flex;
+    flex-direction:column;
+
+    /*
+       IMPORTANT:
+       QR and text boxes are positioned relative
+       to this 1600 × 960 canvas.
+    */
+    position:relative;
+  }
+
+
+  /* ======================================================
+     STOP HEADER
+     ====================================================== */
+
+  .stop-header{
+
+    background:var(--stop-header-bg);
+
+    padding:36px 48px;
+  }
+
+  h1{
+
+    color:var(--stop-name-color);
+
+    font-size:var(--stop-name-size);
+
+    font-weight:700;
+
+    margin:0;
+
+    line-height:1.15;
+  }
+
+
+  /* ======================================================
+     DEPARTURE TABLE
+     ====================================================== */
+
+  .table-wrap{
+
+    padding:0 48px;
+
+    flex:1;
+
+    overflow:hidden;
+  }
+
+  table{
+
+    width:100%;
+
+    border-collapse:collapse;
+  }
+
+  thead tr{
+
+    background:var(--table-header-bg);
+  }
+
+  thead th{
+
+    text-align:left;
+
+    font-weight:400;
+
+    color:var(--table-header-color);
+
+    font-size:var(--table-header-size);
+
+    padding:24px 0 18px;
+
+    border-bottom:3px solid var(--divider-color);
+  }
+
+  thead th .en{
+
+    display:block;
+
+    font-style:italic;
+
+    font-size:var(--table-header-en-size);
+
+    margin-top:4px;
+  }
+
+  thead th.col-abfahrt{
+
+    text-align:right;
+  }
+
+  tbody td{
+
+    color:var(--row-text-color);
+
+    font-size:var(--row-text-size);
+
+    padding:var(--row-padding-y) 0;
+
+    white-space:nowrap;
+
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+
+  tbody td.col-abfahrt{
+
+    text-align:right;
+  }
+
+  tbody td.col-nach{
+
+    width:100%;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    padding-right:32px;
+  }
+
+  tbody td.col-linie{
+
+    padding-right:32px;
+
+    font-weight:700;
+
+    width:1%;
+  }
+
+  .empty-msg{
+
+    color:var(--table-header-color);
+
+    font-style:italic;
+
+    padding:24px 0;
+  }
+
+
+  /* ======================================================
+     QR CODE BOX
+     ====================================================== */
+
+  #qrBox{
+
+    position:absolute;
+
+    left:var(--qr-x);
+
+    top:var(--qr-y);
+
+    width:var(--qr-size);
+
+    height:var(--qr-size);
+
+    box-sizing:border-box;
+
+    border:var(--qr-border-width) solid var(--qr-border-color);
+
+    background:#FFFFFF;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    overflow:hidden;
+
+    z-index:100;
+  }
+
+  #qrCode{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:contain;
+
+    display:block;
+  }
+
+
+  /* ======================================================
+     TEXT BOX
+     ====================================================== */
+
+  #textBox{
+
+    position:absolute;
+
+    left:var(--text-box-x);
+
+    top:var(--text-box-y);
+
+    width:var(--text-box-size);
+
+    height:var(--text-box-size);
+
+    box-sizing:border-box;
+
+    background:var(--text-box-bg);
+
+    color:var(--text-box-color);
+
+    font-size:var(--text-box-font-size);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    text-align:center;
+
+    font-weight:bold;
+
+    line-height:1.15;
+
+    z-index:100;
+
+    padding:10px;
+  }
+
+</style>
+</head>
+
+
+<body>
+
+<div class="canvas">
+
+
+  <!-- ====================================================
+       STOP NAME
+       ==================================================== -->
+
+  <div class="stop-header">
+
+    <h1 id="stop-name"></h1>
+
+  </div>
+
+
+  <!-- ====================================================
+       DEPARTURE TABLE
+       ==================================================== -->
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th class="col-linie">
+            Linie
+            <span class="en">Line</span>
+          </th>
+
+          <th class="col-nach">
+            Nach
+            <span class="en">To</span>
+          </th>
+
+          <th class="col-abfahrt">
+            Abfahrt
+            <span class="en">Departure</span>
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody id="dep-body"></tbody>
+
+    </table>
+
+  </div>
+
+
+  <!-- ====================================================
+       QR CODE
+       ==================================================== -->
+
+  <div id="qrBox">
+
+    <img
+      id="qrCode"
+      alt="QR Code">
+
+  </div>
+
+
+  <!-- ====================================================
+       TEXT BOX
+       ==================================================== -->
+
+  <div id="textBox"></div>
+
+
+</div>
+
+
+<script>
+
+/* ========================================================
+   QR CODE SETTINGS
+   ======================================================== */
+
+/*
+   Read QR destination from CSS variable.
+*/
+const rootStyles =
+  getComputedStyle(document.documentElement);
+
+
+/* ---------- QR URL ---------- */
+
+const qrUrl =
+  rootStyles
+    .getPropertyValue('--qr-url')
+    .trim()
+    .replace(/^"|"$/g, '');
+
+
+/*
+   QR generator URL.
+
+   IMPORTANT:
+   The value of --qr-url is automatically encoded.
+*/
+const qrCode =
+  document.getElementById('qrCode');
+
+
+qrCode.src =
+  'https://api.qrserver.com/v1/create-qr-code/' +
+  '?size=1000x1000&data=' +
+  encodeURIComponent(qrUrl);
+
+
+/* ========================================================
+   TEXT BOX
+   ======================================================== */
+
+const boxText =
+  rootStyles
+    .getPropertyValue('--box-text')
+    .trim()
+    .replace(/^"|"$/g, '');
+
+
+/*
+   Convert | into a line break.
+
+   Example:
+
+   --box-text:"FOR LIVE|SCAN QR";
+
+   becomes:
+
+   FOR LIVE
+   SCAN QR
+*/
+document.getElementById('textBox').innerHTML =
+  boxText.replace(/\|/g, '<br>');
+
+
+/* ========================================================
+   QR LOADED INDICATOR
+   ======================================================== */
+
+qrCode.addEventListener('load', () => {
+
+  qrCode.classList.add('loaded');
+
+});
+
+
+/* ========================================================
+   DATA SETTINGS
+   ======================================================== */
+
+const DATA_URL = 'data.json';
+
+const RELOAD_MS = 5 * 60 * 1000;
+
+
+/* ========================================================
+   DATE FUNCTIONS
+   ======================================================== */
+
+function pad(n){
+
+  return n
+    .toString()
+    .padStart(2, '0');
+
+}
+
+
+function todayISO(d = new Date()){
+
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+}
+
+
+function isoToGtfsDate(iso){
+
+  return iso.replaceAll('-', '');
+
+}
+
+
+const WEEKDAY_KEYS = [
+
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday'
+
+];
+
+
+/* ========================================================
+   ACTIVE SERVICE IDS
+   ======================================================== */
+
+function activeServiceIds(DATA, iso){
+
+  const gdate =
+    isoToGtfsDate(iso);
+
+  const jsDay =
+    new Date(iso + 'T12:00:00').getDay();
+
+  const dayKey =
+    WEEKDAY_KEYS[jsDay];
+
+  const active =
+    new Set();
+
+
+  for (
+    const [sid, cal]
+    of Object.entries(DATA.calendars)
+  ){
+
+    if (
+      cal[dayKey] === 1 &&
+      gdate >= cal.start_date &&
+      gdate <= cal.end_date
+    ){
+
+      active.add(sid);
+
+    }
+
+  }
+
+
+  for (
+    const [sid, exceptions]
+    of Object.entries(DATA.calendar_exceptions)
+  ){
+
+    for (const ex of exceptions){
+
+      if (ex.date !== gdate)
+        continue;
+
+
+      if (ex.exception_type === 1){
+
+        active.add(sid);
+
+      }
+
+
+      if (ex.exception_type === 2){
+
+        active.delete(sid);
+
+      }
+
+    }
+
+  }
+
+
+  return active;
+
+}
+
+
+/* ========================================================
+   MAX DEPARTURES
+   ======================================================== */
+
+function getMaxDepartures(){
+
+  const v =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--max-departures')
+      .trim();
+
+
+  return parseInt(v,10) || 8;
+
+}
+
+
+/* ========================================================
+   RENDER DEPARTURES
+   ======================================================== */
+
+async function render(){
+
+  const stopNameEl =
+    document.getElementById('stop-name');
+
+  const body =
+    document.getElementById('dep-body');
+
+
+  let DATA;
+
+
+  try{
+
+    const res =
+      await fetch(
+        DATA_URL,
+        {
+          cache:'no-store'
+        }
+      );
+
+
+    if (!res.ok){
+
+      throw new Error(
+        'HTTP ' + res.status
+      );
+
+    }
+
+
+    DATA =
+      await res.json();
+
+  }
+  catch(err){
+
+    stopNameEl.textContent =
+      'Keine Daten verfügbar';
+
+
+    body.innerHTML =
+      `<tr>
+        <td colspan="3" class="empty-msg">
+          Fahrplandaten konnten nicht geladen werden
+          (${err.message}).
+        </td>
+      </tr>`;
+
+
+    return;
+
+  }
+
+
+  /* ======================================================
+     STOP NAME
+     ====================================================== */
+
+  const configuredName =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--stop-name-text')
+      .trim()
+      .replace(/^"|"$/g,'');
+
+
+  stopNameEl.textContent =
+    configuredName ||
+    DATA.stop_group_name ||
+    'Haltestelle';
+
+
+  /* ======================================================
+     CURRENT TIME
+     ====================================================== */
+
+  const now =
+    new Date();
+
+
+  const iso =
+    todayISO(now);
+
+
+  const nowMinutes =
+    now.getHours()*60 +
+    now.getMinutes();
+
+
+  const stopIds =
+    Object.keys(DATA.stop_labels);
+
+
+  /* ======================================================
+     ACTIVE SERVICES
+     ====================================================== */
+
+  const activeToday =
+    activeServiceIds(
+      DATA,
+      iso
+    );
+
+
+  const yesterday =
+    new Date(now);
+
+
+  yesterday.setDate(
+    yesterday.getDate()-1
+  );
+
+
+  const activeYesterday =
+    activeServiceIds(
+      DATA,
+      todayISO(yesterday)
+    );
+
+
+  /* ======================================================
+     UPCOMING DEPARTURES
+     ====================================================== */
+
+  const upcoming = [];
+
+
+  for (
+    const dep
+    of DATA.departures
+  ){
+
+    if (
+      !stopIds.includes(
+        dep.stop_id
+      )
+    ){
+
+      continue;
+
+    }
+
+
+    const [hStr,mStr] =
+      dep.departure_time.split(':');
+
+
+    const h =
+      parseInt(hStr,10);
+
+
+    const m =
+      parseInt(mStr,10);
+
+
+    /* ---------- TODAY ---------- */
+
+    if (
+      activeToday.has(
+        dep.service_id
+      )
+    ){
+
+      const minsFromNow =
+        (h*60+m) -
+        nowMinutes;
+
+
+      if (
+        minsFromNow >= -1
+      ){
+
+        upcoming.push({
+
+          dep,
+
+          minsFromNow,
+
+          displayTime:
+            `${pad(h%24)}:${pad(m)}`
+
+        });
+
+      }
+
+    }
+
+
+    /* ---------- AFTER MIDNIGHT ---------- */
+
+    if (
+      h >= 24 &&
+      activeYesterday.has(
+        dep.service_id
+      )
+    ){
+
+      const minsFromNow =
+        ((h-24)*60+m) -
+        nowMinutes;
+
+
+      if (
+        minsFromNow >= -1
+      ){
+
+        upcoming.push({
+
+          dep,
+
+          minsFromNow,
+
+          displayTime:
+            `${pad(h%24)}:${pad(m)}`
+
+        });
+
+      }
+
+    }
+
+  }
+
+
+  /* ======================================================
+     SORT
+     ====================================================== */
+
+  upcoming.sort(
+    (a,b) =>
+      a.minsFromNow -
+      b.minsFromNow
+  );
+
+
+  const next =
+    upcoming.slice(
+      0,
+      getMaxDepartures()
+    );
+
+
+  /* ======================================================
+     NO DEPARTURES
+     ====================================================== */
+
+  if (
+    next.length === 0
+  ){
+
+    body.innerHTML =
+      `<tr>
+        <td colspan="3" class="empty-msg">
+          Keine weiteren Abfahrten heute.
+        </td>
+      </tr>`;
+
+    return;
+
+  }
+
+
+  /* ======================================================
+     DISPLAY
+     ====================================================== */
+
+  body.innerHTML =
+    next.map(
+      ({dep,displayTime}) => `
+
+        <tr>
+
+          <td class="col-linie">
+            ${dep.route_short_name || '—'}
+          </td>
+
+          <td class="col-nach">
+            ${dep.trip_headsign || ''}
+          </td>
+
+          <td class="col-abfahrt">
+            ${displayTime}
+          </td>
+
+        </tr>
+
+      `
+    ).join('');
+
+}
+
+
+/* ========================================================
+   INITIAL RENDER
+   ======================================================== */
+
+render();
+
+
+/* ========================================================
+   UPDATE DATA EVERY 30 SECONDS
+   ======================================================== */
+
+setInterval(
+  render,
+  30000
+);
+
+
+/* ========================================================
+   FULL PAGE RELOAD EVERY 5 MINUTES
+   ======================================================== */
+
+setTimeout(
+  () => location.reload(),
+  RELOAD_MS
+);
+
+</script>
+
+</body>
+</html>
